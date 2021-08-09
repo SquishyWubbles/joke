@@ -18,7 +18,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
 
   List<Sentence> _allMySentences = []; // all jokes
 
-  List<Widget> _allJokeCards = [];
+  List<Widget> _allJokeCards = []; // all joke cards
 
   @override
   void initState() {
@@ -28,6 +28,7 @@ class _SwipeScreenState extends State<SwipeScreen> {
   }
 
   void getAllMySentences() async {
+    print('INIT_ get all jokes');
     // SET empty list to fill with all jokes from json
     final _sentences = <Sentence>[];
 
@@ -46,38 +47,48 @@ class _SwipeScreenState extends State<SwipeScreen> {
       // SET the filled json jokes list to '_allMySentences' empty list
       setState(() => _allMySentences = _sentences);
 
-      // create cardList from AllJokeList
-      _allJokeCards = List.generate(
-        _allMySentences.length, // use length of allJokes
-        (int index) {
-          // for each index, create a container/joke
-          return Container(
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20.0),
-                color: Colors.purple,
-                boxShadow: [
-                  BoxShadow(
-                    color: Theme.of(context).shadowColor,
-                    spreadRadius: 1.0,
-                    blurRadius: 3.0,
-                    offset: Offset(0, 2),
-                  )
-                ]),
-            child: Text(
-              // use index to get the correct content/type
-              '${_allMySentences[index].content}',
-              style: TextStyle(fontSize: 20.0, color: Colors.white),
-            ),
-          );
-        },
-      );
+      await loadCards(); // create cardList from AllJokeList
 
-      _allJokeCards.shuffle(); // randomize the list of cards
     } catch (e) {
       throw Exception(e.toString());
     }
   }
+
+  Future<void> loadCards() async {
+    print('INIT_ load all cards from all jokes');
+
+    _allJokeCards.clear();
+
+    _allJokeCards = List.generate(
+      _allMySentences.length, // use length of allJokes
+      (int index) {
+        // for each index, create a container/joke
+        return Container(
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20.0),
+              color: Colors.purple,
+              boxShadow: [
+                BoxShadow(
+                  color: Theme.of(context).shadowColor,
+                  spreadRadius: 1.0,
+                  blurRadius: 3.0,
+                  offset: Offset(0, 2),
+                )
+              ]),
+          child: Text(
+            // use index to get the correct content/type
+            '${_allMySentences[index].content}',
+            style: TextStyle(fontSize: 20.0, color: Colors.white),
+          ),
+        );
+      },
+    );
+
+    _allJokeCards.shuffle(); // randomize the list of cards
+  }
+
+  void reloadCards() async {}
 
   @override
   Widget build(BuildContext context) {
@@ -85,7 +96,9 @@ class _SwipeScreenState extends State<SwipeScreen> {
       backgroundColor: Colors.orange,
       body: _body(context),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: () {
+          print('pressed stuff');
+        },
         tooltip: 'Next Joke',
         child: Icon(Icons.arrow_forward),
       ),
@@ -93,11 +106,10 @@ class _SwipeScreenState extends State<SwipeScreen> {
   }
 
   Widget _body(BuildContext context) {
+    debugPrint('rebuild _body');
+
     return Center(
       child: Container(
-        // decoration: BoxDecoration(
-        //   borderRadius: BorderRadius.circular(20.0),
-        // ),
         width: MediaQuery.of(context).size.width * 0.9,
         height: MediaQuery.of(context).size.height * 0.8,
         child: _allJokeCards.isNotEmpty
@@ -111,21 +123,24 @@ class _SwipeScreenState extends State<SwipeScreen> {
   }
 
   Widget _tCard() {
+    debugPrint('rebuild _tCard');
+
     // build tCard from the package
     return TCard(
       cards: _allJokeCards,
       controller: _controller,
       onForward: (index, info) {
         // _index = index;
-        // print(info.direction);
+        print(info.direction);
         // setState(() {});
       },
       onBack: (index, info) {
         // _index = index;
         // setState(() {});
       },
-      onEnd: () {
+      onEnd: () async {
         print('end');
+        await loadCards().whenComplete(() => _controller.reset());
       },
     );
   }
